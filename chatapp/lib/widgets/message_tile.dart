@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 
 class MessageTile extends StatelessWidget {
   final String profile_pic;
-  final String username;
+  final String display;
   final String chat_message;
   final String chat_time;
+  final Color? color;
   final Function toggleMenu;
   final Function toggleProfile;
 
   MessageTile(
       {required this.profile_pic,
-      required this.username,
+      required this.display,
       required this.chat_message,
       required this.chat_time,
       required this.toggleMenu,
-      required this.toggleProfile});
+      required this.toggleProfile,
+      this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +47,7 @@ class MessageTile extends StatelessWidget {
               print('name');
             },
             child: Text(
-              username,
+              display,
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ),
@@ -58,7 +60,7 @@ class MessageTile extends StatelessWidget {
           ),
         ],
       ),
-      subtitle: Text(chat_message),
+      subtitle: Text(chat_message,style: TextStyle(color: color),),
       //   ],
       // )
       // ],

@@ -3,67 +3,88 @@ import 'package:chatapp/widgets/popup_menus.dart';
 import 'package:flutter/material.dart';
 import 'package:chatapp/widgets/input_field.dart';
 import 'package:chatapp/widgets/status_icons.dart';
-import 'package:chatapp/services/custom_datatypes.dart';
 import 'package:get/get.dart';
 import 'dart:core';
+import 'package:chatapp/services/api_class.dart';
 
 var temp =
     '''Exposure is simply being introduced to something new.  It's like seeing a travel brochure about a new country. You learn some basic facts and get a general sense of what it's like, but you haven't actually been there.''';
-
+List chat_content = [];
+// var CLength = 0.obs;
+var update = 0.obs;
+bool initial = true;
 class Chat extends StatelessWidget {
-  final chat_page_id;
-  final List<MessageData> chat_content = [];
+  final String chatPageId;
+  final clientUserData;
+  final otherUserData;
 
-  Chat(this.chat_page_id);
+  Chat(
+      {required this.chatPageId,
+      required this.otherUserData,
+      required this.clientUserData}){
+    initial = true;
+  }
 
   @override
   Widget build(BuildContext context) {
-    int message_selected = 0;
-    var showMenu = false.obs;
-    void toggleMenu(int index) {
-      if (index != -1) {
-        message_selected = index;
-      }
-      showMenu.value = !showMenu.value;
-      // print('toggled ${showMenu.value}, chat selected $message_selected');
+    return FutureBuilder<Widget>(
+      future: _buildContent(context),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return snapshot.data!;
+        } else if (snapshot.hasError) {
+          return Text("${snapshot.error}");
+        }
+        return CircularProgressIndicator();
+      },
+    );
+  }
+  int messageSelected = 0;
+  var showMenu = false.obs;
+  void toggleMenu(int index) {
+    if (index != -1) {
+      messageSelected = index;
     }
+    showMenu.value = !showMenu.value;
+  }
 
-    var showProfile = false.obs;
-    void toggleProfile(int index) {
-      if (index != -1) {
-        message_selected = index;
-      }
-      showProfile.value = !showProfile.value;
-      // print('toggled ${showProfile.value}, chat selected $message_selected');
+  var showProfile = false.obs;
+  void toggleProfile(int index) {
+    if (index != -1) {
+      messageSelected = index;
     }
+    showProfile.value = !showProfile.value;
+  }
 
-
-
-    var count = chat_content.length.obs;
-    TextEditingController chat_controller = TextEditingController();
-    var field_check = false.obs;
-    void changing() {
-      field_check.value = (chat_controller.text != '' ? true : false);
-    }
-
+  // var count = chat_content.length.obs;
+  TextEditingController chat_controller = TextEditingController();
+  var field_check = false.obs;
+  void changing() {
+    field_check.value = (chat_controller.text != '' ? true : false);
+  }
+  Future<Widget> _buildContent(BuildContext context) async {
+    initial ? await getMessages(chatPageId): null;
     return Stack(
       children: [
         Scaffold(
           appBar: AppBar(
-            // leading: CircleAvatar(backgroundImage: AssetImage('assets/temp2.png'), radius: 15, backgroundColor: Colors.transparent,),
             title: Row(
               children: [
                 Stack(
                   children: [
                     CircleAvatar(
-                      backgroundImage: AssetImage('assets/images/temp1.jpg'),
+                      backgroundImage: AssetImage(otherUserData['picture']),
                       radius: 17,
                       backgroundColor: Colors.transparent,
                     ),
                     Positioned(
                       bottom: -2,
                       right: -2,
-                      child: StatusIcon(icon_type: 'Online',icon_size: 16.0,icon_border: 3,),
+                      child: StatusIcon(
+                        icon_type: 'Online',
+                        icon_size: 16.0,
+                        icon_border: 3,
+                      ),
                     ),
                   ],
                 ),
@@ -71,7 +92,7 @@ class Chat extends StatelessWidget {
                   width: 10,
                 ),
                 Text(
-                  chat_page_id,
+                  otherUserData['display'],
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                 )
               ],
@@ -92,21 +113,37 @@ class Chat extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Expanded(
+                Obx(() => Expanded(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 7),
-                    child: Obx(() => ListView.builder(
-                          itemCount: count.value,
+                    child: ListView.builder(
+                          itemCount: update.value != -1 ? chat_content.length : chat_content.length,
                           shrinkWrap: true,
                           reverse: true,
                           itemBuilder: (context, index) {
                             return MessageTile(
-                                profile_pic: chat_content[chat_content.length-1-index].profile,
-                                username: chat_content[chat_content.length-1-index].username,
-                                chat_message: chat_content[chat_content.length-1-index].message,
-                                chat_time: chat_content[chat_content.length-1-index].time_stamp,
-                                toggleMenu: () {toggleMenu(chat_content.length-1-index);},
-                                toggleProfile: (){toggleProfile(chat_content.length-1-index);},);
+                              profile_pic:
+                                  chat_content[chat_content.length - 1 - index]
+                                      ['picture'],
+                              display:
+                                  chat_content[chat_content.length - 1 - index]
+                                      ['display'],
+                              chat_message:
+                                  chat_content[chat_content.length - 1 - index]
+                                      ['message'],
+                              chat_time:
+                                  chat_content[chat_content.length - 1 - index]
+                                      ['time_stamp'],
+                              color:
+                                  chat_content[chat_content.length - 1 - index]
+                                      ['color'],
+                              toggleMenu: () {
+                                toggleMenu(chat_content.length - 1 - index);
+                              },
+                              toggleProfile: () {
+                                toggleProfile(chat_content.length - 1 - index);
+                              },
+                            );
                           },
                         )),
                   ),
@@ -154,12 +191,13 @@ class Chat extends StatelessWidget {
                               ),
                               onPressed: () {
                                 field_check.value = false;
-                                count++;
-                                chat_content.add(MessageData(
-                                    profile: 'assets/images/temp1.jpg',
-                                    username: 'Lunatic',
-                                    message: chat_controller.text,
-                                    time_stamp: '${DateTime.timestamp()}'));
+                                sendMessage(chatPageId, clientUserData['_id'],
+                                    chat_controller.text, clientUserData);
+                                // chat_content.add(MessageData(
+                                //     profile: 'assets/images/temp1.jpg',
+                                //     username: 'Lunatic',
+                                //     message: chat_controller.text,
+                                //     time_stamp: '${DateTime.timestamp()}'));
                                 chat_controller.text = '';
                               },
                               style: ButtonStyle(
@@ -177,37 +215,92 @@ class Chat extends StatelessWidget {
           ),
         ),
         Obx(() => Visibility(
-          visible: showMenu.value || showProfile.value,
-          child: GestureDetector(
-            onTap: () {
-              showMenu.value ? toggleMenu(-1) : showProfile.value ? toggleProfile(-1) : null;
-            },
-            child: Container(
-              color: Color(0xCA1D1D1F),
-              height: MediaQuery.of(context).size.height,
-              width: double.infinity,
-            ),
-          ),
-        )),
+              visible: showMenu.value || showProfile.value,
+              child: GestureDetector(
+                onTap: () {
+                  showMenu.value
+                      ? toggleMenu(-1)
+                      : showProfile.value
+                          ? toggleProfile(-1)
+                          : null;
+                },
+                child: Container(
+                  color: Color(0xCA1D1D1F),
+                  height: MediaQuery.of(context).size.height,
+                  width: double.infinity,
+                ),
+              ),
+            )),
         Obx(() => AnimatedPositioned(
-          duration: Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          bottom:
-          showMenu.value ? 0.0 : -MediaQuery.of(context).size.height,
-          left: 0.0,
-          right: 0.0,
-          child: MessagePopup(chat_content: chat_content,message_selected: message_selected,),
-        )),
+              duration: Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              bottom:
+                  showMenu.value ? 0.0 : -MediaQuery.of(context).size.height,
+              left: 0.0,
+              right: 0.0,
+              child: MessagePopup(
+                  messageSelected:
+                      chat_content[messageSelected]['message_id'] ?? null),
+            )),
         Obx(() => AnimatedPositioned(
-          duration: Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          bottom:
-          showProfile.value ? 0.0 : -MediaQuery.of(context).size.height,
-          left: 0.0,
-          right: 0.0,
-          child: ProfilePopup(message_selected: message_selected,),
-        )),
+              duration: Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              bottom:
+                  showProfile.value ? 0.0 : -MediaQuery.of(context).size.height,
+              left: 0.0,
+              right: 0.0,
+              child: ProfilePopup(
+                  selectedUser: chat_content[messageSelected]['user_id'] ?? null),
+            )),
       ],
     );
+  }
+}
+
+getMessages(chatID) async {
+  Map data = {'chat_id': chatID};
+  var response = await getMessagesPerform(data);
+  // print('chats response $response');
+  if (response != 0) {
+    chat_content = response;
+    // CLength.value = response.length;
+    initial = false;
+    // return response;
+  } else {
+    chat_content = [];
+    // CLength.value = 0;
+  }
+}
+
+sendMessage(chatID, senderID, message, clientUserData) async {
+  Map data = {
+    'chat_id': chatID,
+    'sender_id': senderID,
+    'message': message,
+    'time': (DateTime.now()).toString()
+  };
+  int chatIndex = chat_content.length;
+  chat_content.add({
+    'message_id':'',
+    'message': message,
+    'time_stamp': data['time'],
+    'user_id': clientUserData['_id'],
+    'display': clientUserData['display_name'],
+    'picture': clientUserData['profile_picture'],
+    'color': Color(0xFF666666)
+  });
+  update.value +=1;
+  var response = await sendMessagePerform(data);
+  // print('chats response $response');
+  if (response != false) {
+    chat_content[chatIndex]['message_id'] = response['message_id'];
+    chat_content[chatIndex]['color'] = null;
+    update.value +=1;
+    print('$response update ${update.value}');
+    print(chat_content[chatIndex]);
+  } else {
+    chat_content[chatIndex]['color'] = Colors.red;
+    update.value +=1;
+    print(response);
   }
 }

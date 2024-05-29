@@ -11,9 +11,9 @@ List allOutgoingRequests = [];
 var ORLength = 0.obs;
 
 class Requests extends StatelessWidget {
-  final Map userData;
+  final Map clientUserData;
 
-  Requests({required this.userData});
+  Requests({required this.clientUserData});
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +40,8 @@ class Requests extends StatelessWidget {
 
     // allIncomingRequests = await getIncomingRequests(userData['_id']);
     // allOutgoingRequests = await getOutgoingRequests(userData['_id']);
-    await getIncomingRequests(userData['_id']);
-    await getOutgoingRequests(userData['_id']);
+    await getIncomingRequests(clientUserData['_id']);
+    await getOutgoingRequests(clientUserData['_id']);
 
     return DefaultTabController(
       length: 2,
@@ -94,7 +94,7 @@ class Requests extends StatelessWidget {
                                 onPressed: () {
                                   field_check.value = false;
                                   sendRequest(
-                                      userData['_id'], request_controller);
+                                      clientUserData['_id'], request_controller);
                                   request_controller.text = '';
                                 },
                                 style: ButtonStyle(
@@ -156,8 +156,8 @@ class Requests extends StatelessWidget {
                                           allIncomingRequests[index]
                                               ['request_id'],
                                           'accept', () {
-                                        getOutgoingRequests(userData['_id']);
-                                        getIncomingRequests(userData['_id']);
+                                        getOutgoingRequests(clientUserData['_id']);
+                                        getIncomingRequests(clientUserData['_id']);
                                       });
                                     },
                                   ),
@@ -176,8 +176,8 @@ class Requests extends StatelessWidget {
                                           allIncomingRequests[index]
                                               ['request_id'],
                                           'deny', () {
-                                        getOutgoingRequests(userData['_id']);
-                                        getIncomingRequests(userData['_id']);
+                                        getOutgoingRequests(clientUserData['_id']);
+                                        getIncomingRequests(clientUserData['_id']);
                                       });
                                     },
                                   )
@@ -226,8 +226,8 @@ class Requests extends StatelessWidget {
                           requestAction(
                               allOutgoingRequests[index]['request_id'], 'deny',
                               () {
-                            getOutgoingRequests(userData['_id']);
-                            getIncomingRequests(userData['_id']);
+                            getOutgoingRequests(clientUserData['_id']);
+                            getIncomingRequests(clientUserData['_id']);
                           });
                         },
                       ),

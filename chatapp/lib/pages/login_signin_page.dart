@@ -6,28 +6,29 @@ import 'package:chatapp/main.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+
+TextEditingController logInEmailController = TextEditingController();
+TextEditingController logInPassController = TextEditingController();
 class Login extends StatelessWidget {
   const Login({super.key});
 
+  // @override // don't need future builder for now
+  // Widget build(BuildContext context) {
+  //   return FutureBuilder<Widget>(
+  //     future: _buildContent(context), // Replace with your async function call
+  //     builder: (context, snapshot) {
+  //       if (snapshot.hasData) {
+  //         return snapshot.data!;
+  //       } else if (snapshot.hasError) {
+  //         return Text("${snapshot.error}"); // Handle error
+  //       }
+  //       // Show a loading indicator while waiting
+  //       return CircularProgressIndicator();
+  //     },
+  //   );
+  // }
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Widget>(
-      future: _buildContent(context), // Replace with your async function call
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return snapshot.data!;
-        } else if (snapshot.hasError) {
-          return Text("${snapshot.error}"); // Handle error
-        }
-        // Show a loading indicator while waiting
-        return CircularProgressIndicator();
-      },
-    );
-  }
-
-  Future<Widget> _buildContent(BuildContext context) async {
-    TextEditingController email_controller = TextEditingController();
-    TextEditingController pass_controller = TextEditingController();
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -69,7 +70,7 @@ class Login extends StatelessWidget {
               ),
               InputField(
                 field_label: 'Email',
-                controller: email_controller,
+                controller: logInEmailController,
                 field_radius: 2,
                 horisontal_margin: 0,
                 vertical_margin: 2,
@@ -79,7 +80,7 @@ class Login extends StatelessWidget {
               ),
               InputField(
                 field_label: 'Password',
-                controller: pass_controller,
+                controller: logInPassController,
                 field_radius: 2,
                 horisontal_margin: 0,
                 vertical_margin: 2,
@@ -92,9 +93,11 @@ class Login extends StatelessWidget {
               ),
               InkWell(
                 onTap: () async {
-                  var userData = await sendLogIn(email_controller, pass_controller);
+                  var userData = await sendLogIn(logInEmailController, logInPassController);
                   if (userData != 0){
-                    Get.to(Home(userData: userData,));
+                    Get.to(Home(clientUserData: userData,));
+                  } else {
+                    print('login failed');
                   }
                 },
                 child: Container(
@@ -114,9 +117,11 @@ class Login extends StatelessWidget {
   }
 }
 
+TextEditingController signInUsernameController = TextEditingController();
+TextEditingController signInDisplayController = TextEditingController();
+TextEditingController signInEmailController = TextEditingController();
+TextEditingController signInPassController = TextEditingController();
 class Signin extends StatelessWidget {
-  const Signin({super.key});
-
   void checkNameFormat(TextEditingController controller) {
     if (RegExp(r'^[a-zA-Z][a-zA-Z0-9_]*?$').hasMatch(controller.text)) {
       print('matches');
@@ -127,25 +132,6 @@ class Signin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Widget>(
-      future: _buildContent(context), // Replace with your async function call
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return snapshot.data!;
-        } else if (snapshot.hasError) {
-          return Text("${snapshot.error}"); // Handle error
-        }
-        // Show a loading indicator while waiting
-        return CircularProgressIndicator();
-      },
-    );
-  }
-
-  Future<Widget> _buildContent(BuildContext context) async {
-    TextEditingController username_controller = TextEditingController();
-    TextEditingController display_controller = TextEditingController();
-    TextEditingController email_controller = TextEditingController();
-    TextEditingController pass_controller = TextEditingController();
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -187,7 +173,7 @@ class Signin extends StatelessWidget {
               ),
               InputField(
                 field_label: 'Username',
-                controller: username_controller,
+                controller: signInUsernameController,
                 field_radius: 2,
                 horisontal_margin: 0,
                 vertical_margin: 2,
@@ -201,7 +187,7 @@ class Signin extends StatelessWidget {
               ),
               InputField(
                 field_label: 'Display Name',
-                controller: display_controller,
+                controller: signInDisplayController,
                 field_radius: 2,
                 horisontal_margin: 0,
                 vertical_margin: 2,
@@ -211,7 +197,7 @@ class Signin extends StatelessWidget {
               ),
               InputField(
                 field_label: 'Email',
-                controller: email_controller,
+                controller: signInEmailController,
                 field_radius: 2,
                 horisontal_margin: 0,
                 vertical_margin: 2,
@@ -221,7 +207,7 @@ class Signin extends StatelessWidget {
               ),
               InputField(
                 field_label: 'Password',
-                controller: pass_controller,
+                controller: signInPassController,
                 field_radius: 2,
                 horisontal_margin: 0,
                 vertical_margin: 2,
@@ -234,12 +220,14 @@ class Signin extends StatelessWidget {
               ),
               InkWell(
                 onTap: () async {
-                  var userData = await sendSignIn(username_controller,
-                      display_controller, email_controller, pass_controller);
+                  var userData = await sendSignIn(signInUsernameController,
+                      signInDisplayController, signInEmailController, signInPassController);
                   if (userData != 0){
                     Get.to(Home(
-                      userData: userData,
+                      clientUserData: userData,
                     ));
+                  } else {
+                    print('singin failed');
                   }
                 },
                 child: Container(
@@ -268,15 +256,35 @@ class Signin extends StatelessWidget {
               ),
               InkWell(
                 enableFeedback: false,
-                onTap: () {
-                  Get.to(Home(userData: {"_id":"6648a114828c9c34649c176b","username":"lunaticgonemad","display_name":"Lunatic","email":"myemail@gmail.com","password":"1234567890","profile_picture":"assets/images/default.png","status":"Offline","status_display":"","pronounce":"","about_me":"","__v":0},));
+                onTap: () async {
+                  var userData = await debugLogIn("myemail@gmail.com", "1234567890");
+                  if (userData != 0){
+                    Get.to(Home(clientUserData: userData,));
+                  } else {
+                    print('login failed');
+                  }
                 },
                 child: Padding(
                   padding: const EdgeInsets.only(top: 20),
                   child: Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'debug go to messages',
+                        'quick login debug go to messages',
+                        style: TextStyle(color: Colors.blueAccent.shade200),
+                      )),
+                ),
+              ),
+              InkWell(
+                enableFeedback: false,
+                onTap: () async {
+                  Get.to(Home(clientUserData: {"_id":"6648a114828c9c34649c176b","username":"lunaticgonemad","display_name":"Lunatic","email":"myemail@gmail.com","password":"1234567890","profile_picture":"assets/images/default.png","status":"Offline","status_display":"","pronounce":"","about_me":"","__v":0},));
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'offline debug go to messages',
                         style: TextStyle(color: Colors.blueAccent.shade200),
                       )),
                 ),
@@ -289,6 +297,17 @@ class Signin extends StatelessWidget {
   }
 }
 
+debugLogIn(email, pass) async {
+    print('sending log in');
+    Map data = {
+      'email': email,
+      'password': pass
+    };
+    var response = await logInUser(data);
+    return response;
+}
+
+
 sendLogIn(email, pass) async {
   if (RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email.text) &&
       RegExp(r'.{8,}').hasMatch(pass.text)) {
@@ -298,7 +317,7 @@ sendLogIn(email, pass) async {
       'password': pass.text
     };
     var response = await logInUser(data);
-    print(response);
+    // print(response);
     return response;
   } else {
     print('login denied');
@@ -317,7 +336,7 @@ sendSignIn(user, display, email, pass) async {
       'password': pass.text
     };
     var response = await signInUser(data);
-    print('response: $response');
+    // print('response: $response');
     return response;
   } else {
     print(RegExp(r'^[a-zA-Z][a-zA-Z0-9_]*?$').hasMatch(user.text));

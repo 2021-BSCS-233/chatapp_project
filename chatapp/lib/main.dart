@@ -1,11 +1,11 @@
-import 'package:chatapp/pages/login_page.dart';
+import 'package:chatapp/pages/login_signin_page.dart';
 import 'package:chatapp/services/custom_datatypes.dart';
 import 'package:chatapp/widgets/popup_menus.dart';
 import 'package:chatapp/widgets/status_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:chatapp/pages/messages_page.dart';
+import 'package:chatapp/pages/chats_page.dart';
 import 'package:chatapp/pages/notification_page.dart';
 import 'package:chatapp/pages/friends_page.dart';
 import 'package:chatapp/pages/profile_page.dart';
@@ -34,91 +34,44 @@ void main() {
 //
 //   return false;
 // }
+var selected_index = 0.obs;
+var selectedUsername = '';
+var selectedUserId = '';
+var selectedUserPic = '';
+var selectedChatType = '';
+
+var showMenu = false.obs;
+void toggleMenu(dataList) {
+  selectedUserId = dataList[0];
+  selectedUsername = dataList[1];
+  selectedUserPic = dataList[2];
+  selectedChatType = dataList[3];
+
+  showMenu.value = !showMenu.value;
+}
 
 class Home extends StatelessWidget {
-  final Map userData;
+  final Map clientUserData;
 
-  Home({super.key, required this.userData});
+  Home({super.key, required this.clientUserData}){
+    initialM = true;
+    initialF = true;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Widget>(
-      future: _buildContent(context), // Replace with your async function call
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return snapshot.data!;
-        } else if (snapshot.hasError) {
-          return Text("${snapshot.error}"); // Handle error
-        }
-        // Show a loading indicator while waiting
-        return CircularProgressIndicator();
-      },
-    );
-  }
-
-  Future<Widget> _buildContent(BuildContext context) async {
-    var selected_index = 0.obs;
-    // int chat_selected = 0;
-    var selectedUsername = '';
-    var selectedUserId = '';
-    var selectedUserPic = '';
-    var selectedChatType = '';
-
-    var showMenu = false.obs;
-    void toggleMenu(dataList) {
-      selectedUserId = dataList[0];
-      selectedUsername = dataList[1];
-      selectedUserPic = dataList[2];
-      selectedChatType = dataList[3];
-
-      showMenu.value = !showMenu.value;
-      // print('toggled ${showMenu.value}, chat selected $chat_selected');
-    }
-
-    List<UserGroupData> tileContent = [
-      UserGroupData(
-          image: 'assets/images/temp1.jpg',
-          username: 'Argo',
-          top_message: 'it doesnt',
-          chat_page_id: 'Argo',
-          status: 'Online'),
-      UserGroupData(
-          image: 'assets/images/temp2.png',
-          username: 'Dany',
-          top_message: 'Alright see you then',
-          chat_page_id: 'Dany',
-          status: 'Offline'),
-      UserGroupData(
-          image: 'assets/images/temp3.png',
-          username: 'Kris',
-          top_message: 'not nescesarry',
-          chat_page_id: 'Kris',
-          status: 'Offline'),
-      UserGroupData(
-          image: 'assets/images/pic.png',
-          username: 'Lunatic',
-          top_message: 'Hello',
-          chat_page_id: 'Lunatic',
-          status: 'DND'),
-      UserGroupData(
-          image: 'assets/images/temp4.png',
-          username: 'Droub',
-          top_message: 'When does the new season start',
-          chat_page_id: 'Droub',
-          status: 'Asleep'),
-    ];
 
     List pages = [
-      Messages(
+      Chats(
         toggleMenu: toggleMenu,
-        userData: userData,
+        clientUserData: clientUserData,
       ),
-      Notifications(),
+      const Notifications(),
       Friends(
-        userData: userData,
+        clientUserData: clientUserData,
       ),
       Profile(
-        userData: userData,
+        clientUserData: clientUserData,
         toggleMenu: toggleMenu,
       )
     ];
@@ -156,9 +109,9 @@ class Home extends StatelessWidget {
                             children: [
                               CircleAvatar(
                                 backgroundImage: AssetImage(
-                                    userData['profile_picture'] == ''
+                                    clientUserData['profile_picture'] == ''
                                         ? 'assets/images/missing.png'
-                                        : userData['profile_picture']),
+                                        : clientUserData['profile_picture']),
                                 radius: 11.5,
                                 backgroundColor: Colors.transparent,
                               ),
@@ -166,8 +119,8 @@ class Home extends StatelessWidget {
                                 bottom: -1,
                                 right: -1,
                                 child: StatusIcon(
-                                    icon_type: userData['status_display'] != ''
-                                        ? userData['status_display']
+                                    icon_type: clientUserData['status_display'] != ''
+                                        ? clientUserData['status_display']
                                         : 'Online'),
                               ),
                             ],

@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class Profile extends StatelessWidget {
-  final Map userData;
+  final Map clientUserData;
   final Function toggleMenu;
 
-  Profile({required this.toggleMenu, required this.userData});
+  Profile({required this.toggleMenu, required this.clientUserData});
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +46,9 @@ class Profile extends StatelessWidget {
                             border: Border.all(width: 6)),
                         child: CircleAvatar(
                           backgroundImage: AssetImage(
-                              userData['profile_picture'] == ''
+                              clientUserData['profile_picture'] == ''
                                   ? 'assets/images/missing.png'
-                                  : userData['profile_picture']),
+                                  : clientUserData['profile_picture']),
                           // radius: 10,
                           backgroundColor: Colors.transparent,
                         ),
@@ -57,8 +57,8 @@ class Profile extends StatelessWidget {
                         bottom: 3,
                         right: 3,
                         child: StatusIcon(
-                          icon_type: userData['status_display'] != ''
-                              ? userData['status_display']
+                          icon_type: clientUserData['status_display'] != ''
+                              ? clientUserData['status_display']
                               : 'Online',
                           icon_size: 24,
                           icon_border: 4,
@@ -82,21 +82,21 @@ class Profile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    userData['display_name'],
+                    clientUserData['display_name'],
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(
                     height: 3,
                   ),
                   Text(
-                    userData['username'],
+                    clientUserData['username'],
                     style: TextStyle(fontSize: 14),
                   ),
                   SizedBox(
                     height: 3,
                   ),
                   Text(
-                    userData['pronounce'],
+                    clientUserData['pronounce'],
                     style: TextStyle(fontSize: 15, color: Colors.grey),
                   ),
                   SizedBox(
@@ -193,7 +193,7 @@ class Profile extends StatelessWidget {
                     height: 10,
                   ),
                   Text(
-                    '''${userData['about_me']}''',
+                    '''${clientUserData['about_me']}''',
                     style: TextStyle(fontSize: 15, color: Colors.grey.shade300),
                   )
                 ],

@@ -4,19 +4,21 @@ import 'package:get/get.dart';
 import 'package:chatapp/pages/chat_page.dart';
 
 class UserChatTile extends StatelessWidget {
-  final user_data;
-  final top_message;
-  final chat_page_id;
-  final chat_type;
-  final Function log_press_menu;
+  final clientUserData;
+  final otherUserData;
+  final topMessage;
+  final chatPageId;
+  final chatType;
+  final Function logPressMenu;
 
   UserChatTile(
       {super.key,
-      required this.user_data,
-      required this.top_message,
-      required this.chat_page_id,
-      required this.log_press_menu,
-      required this.chat_type});
+      required this.otherUserData,
+      required this.topMessage,
+      required this.chatPageId,
+      required this.logPressMenu,
+      required this.chatType,
+      required this.clientUserData});
 
   @override
   Widget build(BuildContext context) {
@@ -24,24 +26,30 @@ class UserChatTile extends StatelessWidget {
       margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
       child: ListTile(
         onTap: () {
-          Get.to(Chat(chat_page_id));
+          Get.to(Chat(
+              chatPageId: chatPageId,
+              otherUserData: otherUserData,
+              clientUserData: clientUserData));
         },
         onLongPress: () {
           print('Long Press');
-          log_press_menu([
-            user_data['user_id'],
-            user_data['username'] == null ? 'null' : user_data['username'],
-            user_data['picture'],
-            chat_type
+          logPressMenu([
+            otherUserData['user_id'],
+            otherUserData['username'] == null
+                ? 'null'
+                : otherUserData['username'],
+            otherUserData['picture'],
+            chatType
           ]);
         },
         dense: true,
         contentPadding: EdgeInsets.zero,
-        // leading: CircleAvatar(backgroundImage: AssetImage(image), radius: 23,backgroundColor: Colors.transparent,),
         leading: Stack(
           children: [
             CircleAvatar(
-              backgroundImage: AssetImage(user_data['picture']),
+              backgroundImage: AssetImage(otherUserData['picture'] == ""
+                  ? 'assets/images/default.png'
+                  : otherUserData['picture']),
               radius: 25,
               backgroundColor: Colors.transparent,
             ),
@@ -49,22 +57,23 @@ class UserChatTile extends StatelessWidget {
               bottom: -1,
               right: -1,
               child: StatusIcon(
-                icon_type: user_data['status_display'] == '' && user_data['status'] != 'Online'
-                    ? user_data['status']
-                    : user_data['status_display'],
+                icon_type: otherUserData['status_display'] == '' &&
+                        otherUserData['status'] != 'Online'
+                    ? otherUserData['status']
+                    : otherUserData['status_display'],
               ),
             ),
           ],
         ),
         title: Text(
-          user_data['display'],
+          otherUserData['display'],
           style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Color(0xD0FFFFFF)),
         ),
         subtitle: Text(
-          top_message,
+          topMessage,
           style: TextStyle(fontSize: 14, color: Color(0xB0FFFFFF)),
         ),
       ),

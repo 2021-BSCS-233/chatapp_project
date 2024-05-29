@@ -2,8 +2,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'dart:convert';
 
-// var baseurl = 'http://192.168.10.3:2000/';
-var baseurl = 'http://192.168.137.103:2000/';
+var baseurl = 'http://192.168.10.5:2000/';
 
 signInUser(Map data) async {
   var url = Uri.parse('${baseurl}signin_user');
@@ -18,7 +17,7 @@ signInUser(Map data) async {
       return data;
     } else if (response.statusCode == 201) {
       print('username or email already in use');
-      return null;
+      return 0;
     }
   } catch (e) {
     print('catch');
@@ -29,14 +28,13 @@ signInUser(Map data) async {
 
 logInUser(Map data) async {
   var url = Uri.parse('${baseurl}login_user');
-  print('login data $data');
+  // print('login data $data');
   var response = await http.post(url, body: data);
-  print('response ${response.body}');
+  // print('response ${response.body}');
   try {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
-      debugPrint("data ${response.body}");
-      print('try');
+      // debugPrint("data ${response.body}");
       return data;
     } else if (response.statusCode == 201) {
       print('wrong password');
@@ -203,5 +201,54 @@ getFriendsPerform(Map data) async {
     print('catch5');
     debugPrint('error in post data $e');
     return 0;
+  }
+}
+
+getMessagesPerform(Map data) async {
+  var url = Uri.parse('${baseurl}get_chat');
+  var response = await http.post(url, body: data);
+  try {
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      // debugPrint("data ${response.body}");
+      print('chat obtained');
+      return data;
+    } else if (response.statusCode == 201) {
+      print('chat not found');
+      return 0;
+    } else if (response.statusCode == 300) {
+      print('Error on server end');
+      return 0;
+    } else {
+      print('connection error');
+      return 0;
+    }
+  } catch (e) {
+    print('catch6');
+    debugPrint('error in post data $e');
+    return 0;
+  }
+}
+sendMessagePerform(Map data) async {
+  var url = Uri.parse('${baseurl}send_message');
+  var response = await http.post(url, body: data);
+  try {
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      // print('message: $data');
+      // debugPrint("data ${response.body}");
+      print('message send');
+      return data;
+    } else if (response.statusCode == 201) {
+      print('message not send');
+      return false;
+    } else {
+      print('connection error');
+      return false;
+    }
+  } catch (e) {
+    print('catch7');
+    debugPrint('error in post data $e');
+    return false;
   }
 }

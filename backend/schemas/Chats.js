@@ -5,6 +5,14 @@ const chatSchema = new mongoose.Schema({
         type: [String],
         require: true,
     },
+    chat_name:{
+        type: String,
+        default: ''
+    },
+    chat_visible:{
+        type: [Boolean],
+        require: []
+    },
     latest_message:{
         type: String,
         default: ''

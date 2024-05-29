@@ -70,10 +70,10 @@ class UserGroupPopup extends StatelessWidget {
 }
 
 class MessagePopup extends StatelessWidget {
-  final List<MessageData> chat_content;
-  final message_selected;
+  // final List chat_content;
+  final messageSelected;
 
-  MessagePopup({required this.chat_content, required this.message_selected});
+  MessagePopup({required this.messageSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -95,19 +95,19 @@ class MessagePopup extends StatelessWidget {
                   SizedBox(height: 10,),
                   OptionTile(
                       action: () {
-                        print('Prolfie action on ${chat_content[message_selected].message}');
+                        print('Prolfie action on ${messageSelected}');
                       },
                       action_icon: Icons.edit,
                       action_name: 'Edit Message'),
                   OptionTile(
                       action: () {
-                        print('Close Action on ${chat_content[message_selected].message}');
+                        print('Close Action on ${messageSelected}');
                       },
                       action_icon: Icons.copy,
                       action_name: 'Copy Text'),
                   OptionTile(
                       action: () {
-                        print('MAR action on ${chat_content[message_selected].message}');
+                        print('MAR action on ${messageSelected}');
                       },
                       action_icon: CupertinoIcons.delete,
                       action_name: 'Delete Message'),
@@ -122,8 +122,8 @@ class MessagePopup extends StatelessWidget {
 }
 
 class ProfilePopup extends StatelessWidget {
-  final message_selected;
-  ProfilePopup({required this.message_selected});
+  final selectedUser;
+  ProfilePopup({required this.selectedUser});
   @override
   Widget build(BuildContext context) {
     return Container(

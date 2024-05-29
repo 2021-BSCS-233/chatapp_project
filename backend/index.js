@@ -119,7 +119,7 @@ app.post('/signin_user', async (req, res) => {
 app.post('/login_user', async (req, res) =>{
     console.log('login')
     userData = await User.findOne({email: req.body['email']})
-    console.log('userdata', userData)
+//    console.log('userdata', userData)
     if(userData != null){
         if(userData['password'] == req.body['password']){
             console.log('accepted')
@@ -226,14 +226,18 @@ app.post('/request_action', async(req, res)=>{
             await Friend.updateOne({user:requestCheck.sender_id},{$push:{friends:requestCheck.receiver_id}})
             await Friend.updateOne({user:requestCheck.receiver_id},{$push:{friends:requestCheck.sender_id}})
             const newChat = new Chat ({
-                users: [[requestCheck.sender_id, true, false],[requestCheck.receiver_id, true, false]]
+                users: [requestCheck.sender_id,requestCheck.receiver_id],
+                chat_visible: [true,true]
             })
             newChat.save()
                 .then(async () => {
-                    console.log("User created successfully!")
+                    console.log("Request sent successfully!")
                     res.status(200).send()
                 })
-                .catch(error => console.error("Error creating user:", error));
+                .catch(error =>{
+                    console.error("Error sending request:", error)
+                    res.status(203).send()
+                });
         } else {
             console.log('action denied')
             res.status(202).send()
@@ -278,24 +282,97 @@ app.post('/get_chats', async (req, res) =>{
 })
 
 app.post('/get_friends', async (req, res)=>{
-    console.log('get_friends')
-    friendsData = await Friend.findOne({user: req.body['user_id']})
-    if (friendsData != null && friendsData.friends != []){
-        var friendsPresentData = []
-        for (friend of friendsData.friends){
-            userData = await User.findOne({_id: friend})
-            chatData = await Chat.findOne({$or:[{users: [req.body['user_id'],friend]},{users: [friend,req.body['user_id']]}]})
-            friendsPresentData.push({
-                'friend_id': userData._id,
-                'friend_display': userData.display_name,
-                'status': userData.status,
-                'display_status': userData.status_display,
-                'picture': userData.profile_picture,
-                'chat_id': chatData._id,
-            })
+    try {
+        console.log('get_friends')
+        friendsData = await Friend.findOne({user: req.body['user_id']})
+        if (friendsData != null && friendsData.friends != []){
+            var friendsPresentData = []
+            for (friend of friendsData.friends){
+                userData = await User.findOne({_id: friend})
+                chatData = await Chat.findOne({$or:[{users: [req.body['user_id'],friend]},{users: [friend,req.body['user_id']]}]})
+                friendsPresentData.push({
+                    'friend_id': userData._id,
+                    'friend_display': userData.display_name,
+                    'status': userData.status,
+                    'display_status': userData.status_display,
+                    'picture': userData.profile_picture,
+                    'chat_id': chatData._id,
+                })
+            }
+            res.status(200).send(friendsPresentData)
+        } else {
+            res.status(201).send()
         }
-        res.status(200).send(friendsPresentData)
-    } else {
-        res.status(201).send()
+    } catch(e){
+        console.log(`error occurred in friend data processing ${e}`)
     }
+})
+
+app.post('/get_chat', async (req, res)=>{
+    try {
+        console.log('get_chat')
+        chatData = await Chat.findOne({_id: req.body['chat_id']})
+        if (chatData != null){
+            usersData = {}
+//            console.log(chatData['users'])
+            for(user of chatData['users']){
+                userData = await User.findOne({_id: user})
+//                console.log(userData)
+                usersData[user] = {
+                    'user_id': userData._id,
+                    'display': userData.display_name,
+                    'picture': userData.profile_picture
+                }
+            }
+//            console.log('test1',usersData)
+            messagesData = []
+            messages = await Message.find({chat_id:req.body['chat_id']})
+            for (message of messages){
+                userData = usersData[message.sender_id]
+//                console.log('test;',userData)
+                messagesData.push({
+                    'message_id': message._id,
+                    'message': message.message,
+                    'time_stamp': message.time_stamp,
+                    'user_id': userData['user_id'],
+                    'display': userData['display'],
+                    'picture': userData['picture'],
+                })
+            }
+            res.status(200).send(messagesData)
+        } else {
+            res.status(201).send()
+        }
+    } catch (e) {
+        console.log(`error occurred in message data processing ${e}`)
+        res.status(300).send()
+    }
+})
+
+app.post('/send_message', async (req, res) =>{
+    console.log('send_message')
+    const newMessage = new Message ({
+        chat_id: req.body['chat_id'],
+        sender_id: req.body['sender_id'],
+        message: req.body['message'],
+        time_stamp: req.body['time'],
+    })
+    newMessage.save()
+    .then(async () => {
+        senderData = await User.findOne({_id:req.body['sender_id']})
+        messageData = {
+            'message_id':newMessage._id,
+            'message': newMessage.message,
+            'time_stamp': newMessage.time_stamp,
+            'user_id': senderData._id,
+            'display': senderData.display_name,
+            'picture': senderData.profile_picture,
+        }
+        //TODO: use sockets to send to others
+        res.status(200).send(messageData)
+    })
+    .catch(error => {
+        console.error("Error sending message:", error);
+        res.status(201).send()
+    })
 })
