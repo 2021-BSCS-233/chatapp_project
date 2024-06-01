@@ -1,10 +1,9 @@
-import 'package:chatapp/services/custom_datatypes.dart';
 import 'package:chatapp/widgets/status_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import 'option_tile.dart';
+import 'package:chatapp/services/api_class.dart';
+import 'package:chatapp/widgets/option_tile.dart';
 
 class UserGroupPopup extends StatelessWidget {
   final List tile_content;
@@ -31,7 +30,9 @@ class UserGroupPopup extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 10),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: AssetImage(tile_content[2]  == 'null' ? 'assets/images/missing.png' : tile_content[2]),
+                      backgroundImage: AssetImage(tile_content[2] == 'null'
+                          ? 'assets/images/missing.png'
+                          : tile_content[2]),
                       radius: 25,
                       backgroundColor: Colors.transparent,
                     ),
@@ -44,19 +45,22 @@ class UserGroupPopup extends StatelessWidget {
                 ),
                 OptionTile(
                     action: () {
-                      print('Prolfie action on ${tile_content[0]}, chat ${tile_content[3]}');
+                      print(
+                          'Prolfie action on ${tile_content[0]}, chat ${tile_content[3]}');
                     },
                     action_icon: Icons.person,
                     action_name: 'Profile'),
                 OptionTile(
                     action: () {
-                      print('Close Action on ${tile_content[0]}, chat ${tile_content[3]}');
+                      print(
+                          'Close Action on ${tile_content[0]}, chat ${tile_content[3]}');
                     },
                     action_icon: Icons.remove_circle_outline,
                     action_name: 'Close DM'),
                 OptionTile(
                     action: () {
-                      print('MAR action on ${tile_content[0]}, chat ${tile_content[3]}');
+                      print(
+                          'MAR action on ${tile_content[0]}, chat ${tile_content[3]}');
                     },
                     action_icon: CupertinoIcons.eye,
                     action_name: 'Mark As Read'),
@@ -92,7 +96,9 @@ class MessagePopup extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  SizedBox(height: 10,),
+                  SizedBox(
+                    height: 10,
+                  ),
                   OptionTile(
                       action: () {
                         print('Prolfie action on ${messageSelected}');
@@ -121,128 +127,171 @@ class MessagePopup extends StatelessWidget {
   }
 }
 
+var userProflieData = null;
 class ProfilePopup extends StatelessWidget {
   final selectedUser;
+
   ProfilePopup({required this.selectedUser});
-  @override
+
+  @override // don't need future builder for now
   Widget build(BuildContext context) {
-    return Container(
+    return FutureBuilder<Widget>(
+      future: _buildContent(context), // Replace with your async function call
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return snapshot.data!;
+        } else if (snapshot.hasError) {
+          return Text("${snapshot.error}"); // Handle error
+        }
+        // Show a loading indicator while waiting
+        return Container(
+            height: MediaQuery.of(context).size.height * 0.65,
+            child: CircularProgressIndicator());
+      },
+    );
+  }
+
+  Future<Widget> _buildContent(BuildContext context) async {
+    await getUserProfile(selectedUser);
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.65,
       width: double.infinity,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SingleChildScrollView(
-          child: Column(
-            children: [
-              Stack(
-                children: [
-                  Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: Colors.yellow.shade700, //make it adapt to the major color of profile
-                          borderRadius: BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25))
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.all(Radius.circular(25))),
+            child: Column(
+              children: [
+                Stack(
+                  children: [
+                    Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 100,
+                          decoration: BoxDecoration(
+                              color: Colors.yellow.shade700,
+                              //make it adapt to the major color of profile
+                              borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(25),
+                                  topRight: Radius.circular(25))),
                         ),
+                        Container(
+                          width: double.infinity,
+                          height: 50,
+                          color: Colors.transparent,
+                        )
+                      ],
+                    ),
+                    Positioned(
+                      bottom: 10,
+                      left: 20,
+                      child: Stack(
+                        children: [
+                          Container(
+                            height: 80,
+                            width: 80,
+                            decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(width: 6, color: Colors.black)),
+                            child: CircleAvatar(
+                              backgroundImage: AssetImage(
+                                  userProflieData['profile_picture'] ??
+                                      'assets/images/missing.png'),
+                              // radius: 10,
+                              backgroundColor: Colors.transparent,
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 3,
+                            right: 3,
+                            child: StatusIcon(
+                              icon_type:
+                                  userProflieData['status'] == 'Online'
+                                      ? userProflieData['status_display']
+                                      : userProflieData['status']  ?? 'Offline',
+                              icon_size: 24,
+                              icon_border: 4,
+                            ),
+                          ),
+                        ],
                       ),
-                      Container(
-                        width: double.infinity,
-                        height: 50,
-                        color: Colors.transparent,
+                    ),
+                  ],
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+                  alignment: Alignment.centerLeft,
+                  width: double.infinity,
+                  height: 130,
+                  decoration: BoxDecoration(
+                      color: Color(0xFF121218),
+                      borderRadius: BorderRadius.all(Radius.circular(15))),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userProflieData['display_name'] ?? 'User Error',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(
+                        height: 3,
+                      ),
+                      Text(
+                        userProflieData['username'] ?? 'Failed to user data',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      SizedBox(
+                        height: 3,
+                      ),
+                      Text(
+                        userProflieData['pronounce'] ?? 'Try again later',
+                        style: TextStyle(fontSize: 15, color: Colors.grey),
+                      ),
+                      SizedBox(
+                        height: 16,
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  alignment: Alignment.centerLeft,
+                  width: double.infinity,
+                  height: 200,
+                  decoration: BoxDecoration(
+                      color: Color(0xFF121218),
+                      borderRadius: BorderRadius.all(Radius.circular(15))),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'About Me',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.grey),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        userProflieData['about_me'] ?? '',
+                        style: TextStyle(
+                            fontSize: 15, color: Colors.grey.shade300),
                       )
                     ],
                   ),
-                  Positioned(
-                    bottom: 10,
-                    left: 20,
-                    child: Stack(
-                      children: [
-                        Container(
-                          height: 80,
-                          width: 80,
-                          decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              shape: BoxShape.circle,
-                              border: Border.all(width: 6, color: Colors.black)),
-                          child: CircleAvatar(
-                            backgroundImage:
-                            AssetImage('assets/images/temp1.jpg'),
-                            // radius: 10,
-                            backgroundColor: Colors.transparent,
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 3,
-                          right: 3,
-                          child: StatusIcon(
-                            icon_type: 'Online',
-                            icon_size: 24,
-                            icon_border: 4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 18),
-                alignment: Alignment.centerLeft,
-                width: double.infinity,
-                height: 130,
-                decoration: BoxDecoration(
-                    color: Color(0xFF121218),
-                    borderRadius: BorderRadius.all(Radius.circular(15))),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Display',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(
-                      height: 3,
-                    ),
-                    Text(
-                      'Username_realname',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    SizedBox(
-                      height: 3,
-                    ),
-                    Text(
-                      'Gender He/Him',
-                      style: TextStyle(fontSize: 15, color: Colors.grey),
-                    ),
-                    SizedBox(
-                      height: 16,
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                alignment: Alignment.centerLeft,
-                width: double.infinity,
-                height: 200,
-                decoration: BoxDecoration(
-                    color: Color(0xFF121218),
-                    borderRadius: BorderRadius.all(Radius.circular(15))),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('About Me', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),),
-                    SizedBox(height: 10,),
-                    Text('''Ever consider why all demons like to eat humans 
-        An average human has 125,822 calories, one human is 60 days  worth of food
-        Thats why its better to eat humans as they are abundant too...''', style: TextStyle(fontSize: 15, color: Colors.grey.shade300),)
-                  ],
-                ),
-              )
-            ],
+                )
+              ],
+            ),
           ),
         ),
       ),
@@ -252,7 +301,6 @@ class ProfilePopup extends StatelessWidget {
 
 class StatusPopup extends StatelessWidget {
   const StatusPopup({super.key});
-
 
   @override
   Widget build(BuildContext context) {
@@ -349,5 +397,15 @@ class StatusPopup extends StatelessWidget {
             ),
           )),
     );
+  }
+}
+
+getUserProfile(userId) async {
+  Map data = {'user_id': userId};
+  var response = await getUserProfilePerform(data);
+  if (response != 0) {
+    userProflieData = response;
+  } else {
+    userProflieData = null;
   }
 }

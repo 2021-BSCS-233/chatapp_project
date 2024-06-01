@@ -10,8 +10,8 @@ List chats = [];
 var CsLength = 0.obs;
 List friends = [];
 var FLength = 0.obs;
-// const List<String> statusOrder = ['', 'DND', 'Asleep', 'Offline'];
-// List<String> desiredDisplayOrder = ["", "DND", "Asleep", "Offline"];
+// const List<String> statusOrder = ['Online', 'DND', 'Asleep', 'Offline'];
+// List<String> desiredDisplayOrder = ["Online", "DND", "Asleep", "Offline"];
 
 class Chats extends StatelessWidget {
   final Map clientUserData;
@@ -124,10 +124,9 @@ class Chats extends StatelessWidget {
                               right: -2,
                               child: StatusIcon(
                                 icon_type:
-                                    friends[index]['display_status'] == '' &&
-                                            friends[index]['status'] != 'Online'
-                                        ? friends[index]['status']
-                                        : friends[index]['display_status'],
+                                    friends[index]['status'] == 'Online'
+                                        ? friends[index]['status_display']
+                                        : friends[index]['status'],
                                 icon_size: 17,
                                 icon_border: 3.5,
                               ),

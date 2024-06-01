@@ -57,10 +57,9 @@ class UserChatTile extends StatelessWidget {
               bottom: -1,
               right: -1,
               child: StatusIcon(
-                icon_type: otherUserData['status_display'] == '' &&
-                        otherUserData['status'] != 'Online'
-                    ? otherUserData['status']
-                    : otherUserData['status_display'],
+                icon_type:otherUserData['status'] == 'Online'
+                    ? otherUserData['status_display']
+                    : otherUserData['status'],
               ),
             ),
           ],

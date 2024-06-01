@@ -5,8 +5,10 @@ const Request = require('./schemas/Requests')
 const Chat = require('./schemas/Chats')
 const Message = require('./schemas/Messages')
 const Friend = require('./schemas/Friends')
-const express = require("express")
-const app = express();
+const express = require('express')
+const app = express()
+const http = require('http').createServer(app)
+const io = require('socket.io')(http)
 const port = 2000;
 
 const uri = "mongodb+srv://nehalmahdi9:kMCqPPv0VH5hjRA5@chatapp.1hgjo7w.mongodb.net/chatapp_data?retryWrites=true&w=majority&appName=chatapp"
@@ -16,6 +18,7 @@ mongoose.connect(uri)
     .catch(error => console.error("Error connecting to MongoDB:", error));
 
 process.on('SIGINT', async () => {
+    await User.updateMany({},{socket_id:'', status: 'Offline'})
     await mongoose.connection.close();
     if (mongoose.connection.readyState === 0) {
         console.log('Connection successfully closed');
@@ -70,14 +73,46 @@ process.on('SIGINT', async () => {
 // }
 // run().catch(console.dir)
 
-
 app.use(express.json())
 app.use(express.urlencoded({
     extended: true,
 }));
 
-app.listen(port, () => {
-    console.log(`connected to http://localhost:${port}`)
+//app.listen(port, () => {
+//    console.log(`connected to http://localhost:${port}`)
+//});
+http.listen(port, () => {
+  console.log(`connected to http://localhost:${port}`);
+});
+
+io.on('connection', (socket) => {
+  socket.on('save_socket_id',async (data) => {
+      try{
+        const userId = data.userId;
+        const socketId = data.socketId;
+        await User.updateOne({_id:data.userId},{socket_id:data.socketId, status: 'Online'})
+      } catch(e){
+        console.log(e)
+      }
+  });
+  socket.on('close_socket_id',async (data) => {
+      try{
+        const userId = data.userId;
+        await User.updateOne({_id:data.userId},{socket_id:'', status: 'Offline'})
+//        console.log('A client logged out and disconnected');
+      } catch(e){
+        console.log(e)
+      }
+  });
+  socket.on('disconnect',async () => {
+      try{
+        await User.updateOne({socket_id:socket.id},{socket_id:'', status: 'Offline'})
+//        console.log('A client closed the app and disconnected');
+      } catch(e){
+        console.log(e)
+      }
+  });
+  // (rest of your event handling logic)
 });
 
 app.get('/', (req, res) => {
@@ -294,7 +329,7 @@ app.post('/get_friends', async (req, res)=>{
                     'friend_id': userData._id,
                     'friend_display': userData.display_name,
                     'status': userData.status,
-                    'display_status': userData.status_display,
+                    'status_display': userData.status_display,
                     'picture': userData.profile_picture,
                     'chat_id': chatData._id,
                 })
@@ -315,7 +350,7 @@ app.post('/get_chat', async (req, res)=>{
         if (chatData != null){
             usersData = {}
 //            console.log(chatData['users'])
-            for(user of chatData['users']){
+            for(user of chatData.users){
                 userData = await User.findOne({_id: user})
 //                console.log(userData)
                 usersData[user] = {
@@ -368,11 +403,44 @@ app.post('/send_message', async (req, res) =>{
             'display': senderData.display_name,
             'picture': senderData.profile_picture,
         }
-        //TODO: use sockets to send to others
+        try {
+            chatData = await Chat.findOne({_id:req.body['chat_id']})
+            users = chatData.users.filter(element => element !== req.body['sender_id'])
+            for(user of users){
+                userData = await User.findOne({_id:user})
+                if (userData.socket_id != ''){
+                    io.to(userData.socket_id).emit('newMessage', [messageData, req.body['chat_id']]);
+                    console.log('send')
+                } else {
+                    console.log('not sending')
+                }
+            }
+        } catch(e) {
+            console.log(e)
+        }
         res.status(200).send(messageData)
     })
     .catch(error => {
         console.error("Error sending message:", error);
         res.status(201).send()
     })
+})
+
+app.post('/get_user_profile', async (req, res) =>{
+//    console.log('get_user_profile')
+    userData = await User.findOne({_id:req.body['user_id']})
+    if(userData != null){
+        var userProfileData = {
+            'username': userData.username,
+            'display_name': userData.display_name,
+            'profile_picture': userData.profile_picture,
+            'status': userData.status,
+            'status_display': userData.status_display,
+            'pronounce': userData.pronounce,
+            'about_me': userData.about_me
+        }
+        res.status(200).send(userProfileData)
+    } else {
+        res.status(201).send()
+    }
 })

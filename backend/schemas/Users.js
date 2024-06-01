@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'assets/images/default.png'
   },
+  socket_id: {
+    type: String,
+    default: ''
+  },
   status: {
     type: String,
     default: 'Offline'

@@ -57,9 +57,9 @@ class Profile extends StatelessWidget {
                         bottom: 3,
                         right: 3,
                         child: StatusIcon(
-                          icon_type: clientUserData['status_display'] != ''
+                          icon_type: clientUserData['status'] == 'Online'
                               ? clientUserData['status_display']
-                              : 'Online',
+                              : clientUserData['status'] ?? 'Offline',
                           icon_size: 24,
                           icon_border: 4,
                         ),

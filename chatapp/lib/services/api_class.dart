@@ -1,8 +1,58 @@
+import 'package:chatapp/pages/chat_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:socket_io_client/socket_io_client.dart';
+var socket1 = null;
+void connectSocket(userId) async {
+  Socket socket;
+  // print(userId);
 
-var baseurl = 'http://192.168.10.5:2000/';
+  try {
+
+    socket = io('http://192.168.10.3:2000', <String, dynamic>{
+      'transports': ['websocket'],
+    });
+    socket.connect();
+    @override
+    void dispose() {
+      socket.disconnect();
+      socket.dispose();
+    }
+    socket.onConnect((_) {
+      socket1 = socket;
+      socket.emit('save_socket_id', {'userId': userId, 'socketId': socket.id});
+      print('Connection established ${socket.id}');
+    });
+    socket.onDisconnect((_) {
+      print('Connection Disconnection');
+      dispose();
+    });
+    socket.onConnectError((err) => print(err));
+    socket.onError((err) => print(err));
+
+    socket.on('newMessage', (data) {
+      if(chatPageIdGlobal == data[1]){
+        receiveMessage(data[0]);
+      } else {
+        //TODO: add ping mechanic
+        print('ping');
+      }
+    });
+
+  } catch (e){
+    print(e);
+  }
+}
+void logOutDisconnect(userId){
+  if(socket1 != null){
+    socket1.emit('close_socket_id', {'userId': userId});
+    socket1.disconnect();
+    socket1.dispose();
+  }
+}
+
+var baseurl = 'http://192.168.10.3:2000/';
 
 signInUser(Map data) async {
   var url = Uri.parse('${baseurl}signin_user');
@@ -229,6 +279,7 @@ getMessagesPerform(Map data) async {
     return 0;
   }
 }
+
 sendMessagePerform(Map data) async {
   var url = Uri.parse('${baseurl}send_message');
   var response = await http.post(url, body: data);
@@ -250,5 +301,26 @@ sendMessagePerform(Map data) async {
     print('catch7');
     debugPrint('error in post data $e');
     return false;
+  }
+}
+
+getUserProfilePerform(Map data) async {
+  var url = Uri.parse('${baseurl}get_user_profile');
+  var response = await http.post(url, body: data);
+  try {
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      return data;
+    } else if (response.statusCode == 201) {
+      print('user not found');
+      return 0;
+    } else {
+      print('connection error');
+      return 0;
+    }
+  } catch (e) {
+    print('catch8');
+    debugPrint('error in post data $e');
+    return 0;
   }
 }

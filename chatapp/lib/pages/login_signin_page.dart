@@ -27,6 +27,7 @@ class Login extends StatelessWidget {
   //     },
   //   );
   // }
+  // Future<Widget> _buildContent(BuildContext context) async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,6 +96,7 @@ class Login extends StatelessWidget {
                 onTap: () async {
                   var userData = await sendLogIn(logInEmailController, logInPassController);
                   if (userData != 0){
+                    connectSocket(userData['_id']);
                     Get.to(Home(clientUserData: userData,));
                   } else {
                     print('login failed');
@@ -259,6 +261,7 @@ class Signin extends StatelessWidget {
                 onTap: () async {
                   var userData = await debugLogIn("myemail@gmail.com", "1234567890");
                   if (userData != 0){
+                    connectSocket(userData['_id']);
                     Get.to(Home(clientUserData: userData,));
                   } else {
                     print('login failed');

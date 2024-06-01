@@ -41,6 +41,7 @@ var selectedUserPic = '';
 var selectedChatType = '';
 
 var showMenu = false.obs;
+
 void toggleMenu(dataList) {
   selectedUserId = dataList[0];
   selectedUsername = dataList[1];
@@ -53,14 +54,13 @@ void toggleMenu(dataList) {
 class Home extends StatelessWidget {
   final Map clientUserData;
 
-  Home({super.key, required this.clientUserData}){
+  Home({super.key, required this.clientUserData}) {
     initialM = true;
     initialF = true;
   }
 
   @override
   Widget build(BuildContext context) {
-
     List pages = [
       Chats(
         toggleMenu: toggleMenu,
@@ -119,9 +119,8 @@ class Home extends StatelessWidget {
                                 bottom: -1,
                                 right: -1,
                                 child: StatusIcon(
-                                    icon_type: clientUserData['status_display'] != ''
-                                        ? clientUserData['status_display']
-                                        : 'Online'),
+                                    icon_type:
+                                        clientUserData['status_display']),
                               ),
                             ],
                           ),
