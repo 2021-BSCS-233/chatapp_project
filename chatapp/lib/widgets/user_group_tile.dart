@@ -51,7 +51,7 @@ class UserChatTile extends StatelessWidget {
                   ? 'assets/images/default.png'
                   : otherUserData['picture']),
               radius: 25,
-              backgroundColor: Colors.transparent,
+              backgroundColor: Colors.grey.shade900,
             ),
             Positioned(
               bottom: -1,

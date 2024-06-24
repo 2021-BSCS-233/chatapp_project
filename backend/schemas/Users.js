@@ -29,11 +29,11 @@ const userSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    default: 'Offline'
+    default: 'Online'
   },
   status_display: {
     type: String,
-    default: ''
+    default: 'Online'
   },
   pronounce: {
     type: String,

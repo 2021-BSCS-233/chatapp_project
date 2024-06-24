@@ -1,16 +1,18 @@
 import 'package:chatapp/pages/chat_page.dart';
+import 'package:chatapp/pages/chats_page.dart';
+import 'package:chatapp/pages/requests_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:socket_io_client/socket_io_client.dart';
+
+var baseurl = 'http://192.168.181.28:3000/';
 var socket1 = null;
+
 void connectSocket(userId) async {
   Socket socket;
-  // print(userId);
-
   try {
-
-    socket = io('http://192.168.10.3:2000', <String, dynamic>{
+    socket = io('$baseurl', <String, dynamic>{
       'transports': ['websocket'],
     });
     socket.connect();
@@ -19,6 +21,7 @@ void connectSocket(userId) async {
       socket.disconnect();
       socket.dispose();
     }
+
     socket.onConnect((_) {
       socket1 = socket;
       socket.emit('save_socket_id', {'userId': userId, 'socketId': socket.id});
@@ -32,37 +35,42 @@ void connectSocket(userId) async {
     socket.onError((err) => print(err));
 
     socket.on('newMessage', (data) {
-      if(chatPageIdGlobal == data[1]){
+      if (chatPageIdGlobal == data[1]) {
         receiveMessage(data[0]);
       } else {
         //TODO: add ping mechanic
         print('ping');
       }
     });
-
-  } catch (e){
+    socket.on('updateChatsAndFriends', (data) {
+      getChatsData(userId);
+    });
+    socket.on('updateRequests', (data) async {
+      await getRequestsData(userId);
+      if (data == 1) {
+        getFriends(userId);
+        getChatsData(userId);
+      }
+    });
+  } catch (e) {
     print(e);
   }
 }
-void logOutDisconnect(userId){
-  if(socket1 != null){
+
+void logOutDisconnect(userId) {
+  if (socket1 != null) {
     socket1.emit('close_socket_id', {'userId': userId});
     socket1.disconnect();
     socket1.dispose();
   }
 }
 
-var baseurl = 'http://192.168.10.3:2000/';
-
-signInUser(Map data) async {
+sendSignInPerform(Map data) async {
   var url = Uri.parse('${baseurl}signin_user');
-  print('singin data $data');
   var response = await http.post(url, body: data);
-  debugPrint("response ${response.body}");
   try {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
-      debugPrint("data ${response.body}");
       print('user created');
       return data;
     } else if (response.statusCode == 201) {
@@ -76,15 +84,12 @@ signInUser(Map data) async {
   }
 }
 
-logInUser(Map data) async {
+sendLogInPerform(Map data) async {
   var url = Uri.parse('${baseurl}login_user');
-  // print('login data $data');
   var response = await http.post(url, body: data);
-  // print('response ${response.body}');
   try {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
-      // debugPrint("data ${response.body}");
       return data;
     } else if (response.statusCode == 201) {
       print('wrong password');
@@ -109,9 +114,6 @@ sendRequestPerform(Map data) async {
   var response = await http.post(url, body: data);
   try {
     if (response.statusCode == 200) {
-      // var data = jsonDecode(response.body);
-      // debugPrint("data ${response.body}");
-      // print('sent');
       return true;
     } else if (response.statusCode == 201) {
       print('user doesnt exist');
@@ -140,8 +142,6 @@ getIncomingRequestsPerform(Map data) async {
   try {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
-      // debugPrint("data ${response.body}");
-      // print('retried $data');
       return data;
     } else if (response.statusCode == 201) {
       print('no requests found');
@@ -164,8 +164,6 @@ getOutgoingRequestsPerform(Map data) async {
   try {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
-      // debugPrint("data ${response.body}");
-      // print('retried $data');
       return data;
     } else if (response.statusCode == 201) {
       print('no requests found');
@@ -187,8 +185,6 @@ requestActionPerform(Map data) async {
   var response = await http.post(url, body: data);
   try {
     if (response.statusCode == 200) {
-      // var data = jsonDecode(response.body);
-      // debugPrint("data ${response.body}");
       print('action successful');
       return true;
     } else if (response.statusCode == 201) {
@@ -214,7 +210,6 @@ getChatsPerform(Map data) async {
   try {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
-      // debugPrint("data ${response.body}");
       print('chats obtained');
       return data;
     } else if (response.statusCode == 201) {
@@ -237,7 +232,6 @@ getFriendsPerform(Map data) async {
   try {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
-      // debugPrint("data ${response.body}");
       print('friends obtained');
       return data;
     } else if (response.statusCode == 201) {
@@ -260,7 +254,6 @@ getMessagesPerform(Map data) async {
   try {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
-      // debugPrint("data ${response.body}");
       print('chat obtained');
       return data;
     } else if (response.statusCode == 201) {
@@ -286,8 +279,6 @@ sendMessagePerform(Map data) async {
   try {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
-      // print('message: $data');
-      // debugPrint("data ${response.body}");
       print('message send');
       return data;
     } else if (response.statusCode == 201) {
@@ -324,3 +315,48 @@ getUserProfilePerform(Map data) async {
     return 0;
   }
 }
+
+updateProfilePerform(Map data) async {
+  var url = Uri.parse('${baseurl}update_profile');
+  var response = await http.post(url, body: data);
+  try {
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      return data;
+    } else if (response.statusCode == 201) {
+      print('data not saved');
+      return 0;
+    } else {
+      print('connection error');
+      return 0;
+    }
+  } catch (e) {
+    print('catch9');
+    debugPrint('error in post data $e');
+    return false;
+  }
+}
+
+updateStatusDisplayPerform(Map data) async {
+  var url = Uri.parse('${baseurl}update_status_display');
+  var response = await http.post(url, body: data);
+  try {
+    if (response.statusCode == 200) {
+      return true;
+    } else if (response.statusCode == 201) {
+      print('data not saved');
+      return false;
+    } else {
+      print('connection error');
+      return false;
+    }
+  } catch (e) {
+    print('catch10');
+    debugPrint('error in post data $e');
+    return false;
+  }
+}
+
+// updateAccountPerform(Map data) async{
+//   var url = Uri.parse('${baseurl}update_account');
+// }

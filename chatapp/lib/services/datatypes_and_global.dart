@@ -25,3 +25,5 @@ class UserGroupData {
         required this.chat_page_id,
         required this.status});
 }
+
+Map clientUserDataGlobal = {};

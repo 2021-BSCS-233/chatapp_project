@@ -1,3 +1,4 @@
+import 'package:chatapp/pages/chat_page.dart';
 import 'package:chatapp/pages/requests_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,13 +7,15 @@ import 'package:get/get.dart';
 import 'package:chatapp/services/api_class.dart';
 
 bool initialF = true;
+var update = 0.obs;
 List friends = [];
-var FLength = 0.obs;
 
 class Friends extends StatelessWidget {
   final Map clientUserData;
+  final Function toggleProfile;
 
-  const Friends({super.key, required this.clientUserData});
+  const Friends(
+      {super.key, required this.clientUserData, required this.toggleProfile});
 
   // @override
   // Widget build(BuildContext context) {
@@ -81,7 +84,7 @@ class Friends extends StatelessWidget {
         ],
       ),
       body: FutureBuilder<Widget>(
-        future: friendsData(), // Replace with your async function call
+        future: friendsData(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return snapshot.data!;
@@ -96,10 +99,9 @@ class Friends extends StatelessWidget {
                       Text("Check your connection or try again later")
                     ],
                   ),
-                )); // Handle error
+                ));
           }
-          // Show a loading indicator while waiting
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         },
       ),
     );
@@ -107,63 +109,78 @@ class Friends extends StatelessWidget {
 
   Future<Widget> friendsData() async {
     initialF ? await getFriends(clientUserData['_id']) : null;
-    return Container(
-      padding: EdgeInsets.only(left: 10),
-      child: ListView.builder(
-          itemCount: FLength.value,
-          shrinkWrap: true,
-          itemBuilder: (context, index) {
-            return Container(
-              margin: const EdgeInsets.only(top: 15),
-              decoration: BoxDecoration(
-                // color: Color(0xFF16161A),
-                color: Color(0xFF121218),
-                borderRadius: BorderRadius.all(Radius.circular(20)),
-              ),
-              child: ListTile(
-                leading: InkWell(
-                  onTap: () {
-                    print('open profile ${friends[index]['friend_id']}');
-                  },
-                  child: CircleAvatar(
-                    backgroundImage: AssetImage(friends[index]['picture']),
-                    radius: 17,
-                    backgroundColor: Colors.transparent,
-                  ),
-                ),
-                title: Text(
-                  friends[index]['friend_display'],
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                trailing: Container(
-                  width: 70,
-                  child: Row(
-                    children: [
-                      InkWell(
-                        child: Icon(CupertinoIcons.chat_bubble_text_fill),
+
+    return Obx(() => update.value == update.value && friends.length < 1
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('You do not have any friends'),
+                Text('Start adding some friends to chat with')
+              ],
+            ),
+          )
+        : Container(
+            padding: EdgeInsets.only(left: 10),
+            child: ListView.builder(
+                itemCount: friends.length,
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  return Container(
+                    margin: const EdgeInsets.only(top: 15),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF121218),
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                    ),
+                    child: ListTile(
+                      leading: InkWell(
                         onTap: () {
-                          print('Opening chat ${friends[index]['chat_id']}');
+                          toggleProfile(friends[index]['friend_id']);
                         },
-                      ),
-                      SizedBox(
-                        width: 20,
-                      ),
-                      InkWell(
-                        child: Icon(
-                          Icons.person_remove,
-                          color: Colors.red,
+                        child: CircleAvatar(
+                          backgroundImage:
+                              AssetImage(friends[index]['picture']),
+                          radius: 17,
+                          backgroundColor: Colors.grey.shade900,
                         ),
-                        onTap: () {
-                          print('Unfriended ${friends[index]['friend_id']}');
-                        },
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-    );
+                      ),
+                      title: Text(
+                        friends[index]['display'],
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      trailing: Container(
+                        width: 70,
+                        child: Row(
+                          children: [
+                            InkWell(
+                              child: Icon(CupertinoIcons.chat_bubble_text_fill),
+                              onTap: () {
+                                Get.to(Chat(
+                                    chatPageId: friends[index]['chat_id'],
+                                    otherUserData: friends[index],
+                                    clientUserData: clientUserData));
+                              },
+                            ),
+                            SizedBox(
+                              width: 20,
+                            ),
+                            InkWell(
+                              child: Icon(
+                                Icons.person_remove,
+                                color: Colors.red,
+                              ),
+                              onTap: () {
+                                print(
+                                    'Unfriended ${friends[index]['friend_id']}');
+                              },
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+          ));
   }
 }
 
@@ -172,15 +189,13 @@ getFriends(currentUser) async {
     'user_id': currentUser,
   };
   var response = await getFriendsPerform(data);
-  print('friends response $response');
   if (response != 0) {
     friends = response;
     // friends.sort((map1, map2) => map1["friend_display"]!.compareTo(map2["friend_display"] as String));
-    FLength.value = response.length;
     initialF = false;
     // return response;
   } else {
     friends = [];
-    FLength.value = 0;
   }
+  update.value += 1;
 }

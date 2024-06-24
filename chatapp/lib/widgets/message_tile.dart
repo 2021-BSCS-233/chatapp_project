@@ -49,7 +49,7 @@ class MessageTileFull extends StatelessWidget {
             child: CircleAvatar(
               backgroundImage: AssetImage(profile_pic),
               radius: 20,
-              backgroundColor: Colors.transparent,
+              backgroundColor: Color(0x20F2F2F2),
             ),
           ),
           SizedBox(width: 10),

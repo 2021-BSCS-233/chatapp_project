@@ -1,6 +1,7 @@
 import 'package:chatapp/widgets/status_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:chatapp/services/api_class.dart';
 import 'package:chatapp/widgets/option_tile.dart';
@@ -76,8 +77,9 @@ class UserGroupPopup extends StatelessWidget {
 class MessagePopup extends StatelessWidget {
   // final List chat_content;
   final messageSelected;
+  final Function? deleteMessage;
 
-  MessagePopup({required this.messageSelected});
+  MessagePopup({required this.messageSelected, this.deleteMessage});
 
   @override
   Widget build(BuildContext context) {
@@ -101,22 +103,22 @@ class MessagePopup extends StatelessWidget {
                   ),
                   OptionTile(
                       action: () {
-                        print('Prolfie action on ${messageSelected}');
+                        print('Edit action on ${messageSelected['message_id']}');
                       },
                       action_icon: Icons.edit,
                       action_name: 'Edit Message'),
                   OptionTile(
-                      action: () {
-                        print('Close Action on ${messageSelected}');
+                      action: () async {
+                        await Clipboard.setData(ClipboardData(text:messageSelected['message']));
                       },
                       action_icon: Icons.copy,
                       action_name: 'Copy Text'),
-                  OptionTile(
+                  deleteMessage != null ? OptionTile(
                       action: () {
-                        print('MAR action on ${messageSelected}');
+                        deleteMessage!();
                       },
                       action_icon: CupertinoIcons.delete,
-                      action_name: 'Delete Message'),
+                      action_name: 'Delete Message') : SizedBox(),
                 ],
               ),
             ),
@@ -128,6 +130,7 @@ class MessagePopup extends StatelessWidget {
 }
 
 var userProflieData = null;
+
 class ProfilePopup extends StatelessWidget {
   final selectedUser;
 
@@ -144,9 +147,9 @@ class ProfilePopup extends StatelessWidget {
           return Text("${snapshot.error}"); // Handle error
         }
         // Show a loading indicator while waiting
-        return Container(
-            height: MediaQuery.of(context).size.height * 0.65,
-            child: CircularProgressIndicator());
+        return Container();
+            // height: MediaQuery.of(context).size.height * 0.65,
+            // child: CircularProgressIndicator());
       },
     );
   }
@@ -205,17 +208,16 @@ class ProfilePopup extends StatelessWidget {
                                   userProflieData['profile_picture'] ??
                                       'assets/images/missing.png'),
                               // radius: 10,
-                              backgroundColor: Colors.transparent,
+                                backgroundColor: Colors.grey.shade900,
                             ),
                           ),
                           Positioned(
                             bottom: 3,
                             right: 3,
                             child: StatusIcon(
-                              icon_type:
-                                  userProflieData['status'] == 'Online'
-                                      ? userProflieData['status_display']
-                                      : userProflieData['status']  ?? 'Offline',
+                              icon_type: userProflieData['status'] == 'Online'
+                                  ? userProflieData['status_display']
+                                  : userProflieData['status'] ?? 'Offline',
                               icon_size: 24,
                               icon_border: 4,
                             ),
@@ -299,12 +301,27 @@ class ProfilePopup extends StatelessWidget {
   }
 }
 
+var selectedValue = 1.obs;
+
 class StatusPopup extends StatelessWidget {
-  const StatusPopup({super.key});
+  final Map clientUserData;
+  final Function updateSD;
+
+  StatusPopup(
+      {super.key,
+      required this.updateSD,
+      required this.clientUserData}) {
+    if (clientUserData['status_display'] == 'DND') {
+      selectedValue.value = 2;
+    } else if (clientUserData['status_display'] == 'Asleep') {
+      selectedValue.value = 3;
+    } else if (clientUserData['status_display'] == 'Offline') {
+      selectedValue.value = 4;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    var selectedValue = 1.obs;
     return Container(
       height: MediaQuery.of(context).size.height * 0.5,
       width: double.infinity,
@@ -355,8 +372,15 @@ class StatusPopup extends StatelessWidget {
                               trailing: Radio(
                                   value: 1,
                                   groupValue: selectedValue.value,
-                                  onChanged: (value) {
+                                  onChanged: (value) async {
+                                    var temp = selectedValue.value;
                                     selectedValue.value = value as int;
+                                    var result = await updateStatusDisplay(clientUserData['_id'],'Online');
+                                    if(result){
+                                      updateSD('Online');
+                                    } else {
+                                      selectedValue.value = temp;
+                                    }
                                   }),
                             ),
                             ListTile(
@@ -365,8 +389,15 @@ class StatusPopup extends StatelessWidget {
                               trailing: Radio(
                                   value: 2,
                                   groupValue: selectedValue.value,
-                                  onChanged: (value) {
+                                  onChanged: (value) async {
+                                    var temp = selectedValue.value;
                                     selectedValue.value = value as int;
+                                    var result = await updateStatusDisplay(clientUserData['_id'],'DND');
+                                    if(result){
+                                      updateSD('DND');
+                                    } else {
+                                      selectedValue.value = temp;
+                                    }
                                   }),
                             ),
                             ListTile(
@@ -375,8 +406,15 @@ class StatusPopup extends StatelessWidget {
                               trailing: Radio(
                                   value: 3,
                                   groupValue: selectedValue.value,
-                                  onChanged: (value) {
+                                  onChanged: (value) async {
+                                    var temp = selectedValue.value;
                                     selectedValue.value = value as int;
+                                    var result = await updateStatusDisplay(clientUserData['_id'],'Asleep');
+                                    if(result){
+                                      updateSD('Asleep');
+                                    } else {
+                                      selectedValue.value = temp;
+                                    }
                                   }),
                             ),
                             ListTile(
@@ -385,8 +423,15 @@ class StatusPopup extends StatelessWidget {
                               trailing: Radio(
                                   value: 4,
                                   groupValue: selectedValue.value,
-                                  onChanged: (value) {
+                                  onChanged: (value) async {
+                                    var temp = selectedValue.value;
                                     selectedValue.value = value as int;
+                                    var result = await updateStatusDisplay(clientUserData['_id'],'Offline');
+                                    if(result){
+                                      updateSD('Offline');
+                                    } else {
+                                      selectedValue.value = temp;
+                                    }
                                   }),
                             )
                           ],
@@ -408,4 +453,12 @@ getUserProfile(userId) async {
   } else {
     userProflieData = null;
   }
+}
+
+updateStatusDisplay(userId, statusDisplay) async{
+  Map data = {
+    'user_id': userId,
+    'status_display': statusDisplay
+  };
+  return await updateStatusDisplayPerform(data);
 }
