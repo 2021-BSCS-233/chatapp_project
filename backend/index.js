@@ -11,8 +11,7 @@ const http = require('http').createServer(app)
 const io = require('socket.io')(http)
 const port = 3000;
 
-const uri = "mongodb+srv://nehalmahdi9:kMCqPPv0VH5hjRA5@chatapp.1hgjo7w.mongodb.net/chatapp_data?retryWrites=true&w=majority&appName=chatapp"
-
+const uri = "mongodb+srv://your.clyster"
 mongoose.connect(uri)
     .then(() => console.log("Connected to MongoDB"))
     .catch(error => console.log("Error connecting to MongoDB:", error));
